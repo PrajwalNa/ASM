@@ -143,6 +143,9 @@ jmp .text
     print: 
         cmp     dh, c           ; comparing the dh register (loop index) with counter
         je      loopend         ; jmp to loopend label if the above instruction satisfies
+        cmp     dh, 18h         ; check if the cursor is in the last row
+        je      changePage      ; jump to change page if its the last row
+        back:
         cmp     dl, 50h         ; comparing the dl register (cursor position) with 50h [80d] (boundary of screen)
         jg      testC2          ; jmp to testC2 label if the above instruction satisfies
         mov     cx, 8           ; loop counter initialised to 8
@@ -183,12 +186,27 @@ jmp .text
             mov     ah, 2       ; syscall to change cursor position
             int     10h         ; do it!
             jmp     print       ; loop back up
+            
+        changePage:
+            inc     bh          ; incrementing the value of page number by one
+            cmp     bh, 7       ; check if its the last page
+            jg      loopend     ; ending the loop if it is greater than the last page
+            ; reseting row and coloumn to zero
+            mov     dh, 0
+            mov     dl, 0
+            mov     ah, 2       ; syscall to set cursor position
+            int     10h
+            sub     c, 18h
+            mov     al, bh      ; setting current active page
+            mov     ah, 05h     ; syscall for it
+            int     10h
+            jmp     back
 
     loopend:
         mov     ah, 00h         ; syscall to get a character and discard it
         int     16h             ; do it!
         int     20h             ; syscall to terminate the program / deprecated by MS DOS int 21h / but this is hardware interrupt
-
+    
     vld:
         mov     si, offset numArr   ; si = &numArr
         ; alternatively to offset we can use `lea' which is more powerful
