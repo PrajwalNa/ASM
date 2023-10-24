@@ -5,5 +5,5 @@ You might need emu 8086 for the 8086 microprocessor code because I'm pretty sure
 
 Example run of an 8086 microprocessor code with `40` and `Hello 8086` as input
 <p align="center">
-  <img  src="https://github.com/PrajwalNa/ASM/tree/main/8086 Microprocessor/Demo.gif">
+  <img  src="https://github.com/PrajwalNa/ASM/blob/595c624b75cce6d47dbf8d2791131e0b0ab24882/8086%20Microprocessor/Demo.gif">
 </p>
