@@ -13,6 +13,8 @@ jmp .text
     temp1 dw ?
     c db ?
     msg db 11 dup (?)
+    ; 11 is the number of characters to be stored in the array
+    ; dup (?) is used to initialise the array with 0s
 
 ; section for initialised values in Intel/Linux syntax        
 .data:
@@ -20,6 +22,8 @@ jmp .text
     promptLen equ $ - offset promptNum
     prompt2 db  "Enter up to 10 characters: "
     prompt2Len equ $ - offset prompt2
+    ; $ is the address of the next byte after the current one
+    ; so $ - offset promptNum is the length of the string
     numArr db  39h, 38h, 37h, 36h, 35h, 34h, 33h, 32h, 31h, 30h
                     
 ; section for code in Intel/Linux syntax    
@@ -61,118 +65,130 @@ jmp .text
         mov     ah, 13h
         int     10h
         
-        mov     cx, 2
+        mov     cx, 2           ; loop counter initialised to 2
         mov     bx, 0
         getNum:
-            mov     ah, 00h
-            int     16h
+            mov     ah, 00h     ; syscall to get a character
+            int     16h         ; do it!
         
-            call    vld
+            call    vld         ; calling the vld function/label to validate the user input
         
             and     al, 0Fh         
             ; bitwise & operation on user input to convert it into dec
             ; only works on single digit hex values, i.e. will only convert up to 9 into dec
-            cmp     cx, 2
-            je      first
-            mov     bl, c
-            add     bl, al
-            mov     [c], bl
-            jmp     firstEND
+            cmp     cx, 2       ; comparing the loop index with 2
+            je      first       ; jmp to first label if the above instruction satisfies
+            mov     bl, c       ; moving the value of c to bl
+            add     bl, al      ; adding the value of al to bl
+            mov     [c], bl     ; storing the converted value at the address of c
+            jmp     firstEND    ; jmp to firstEND label
             first:
-                mov     bl, 10
-                mul     bl
+                mov     bl, 10          ; moving 10 to bl
+                mul     bl              ; multiplying the value of al with bl
                 mov     [c], al         ; storing the converted value at the address of c
-                loop    getNum  
+                loop    getNum          ; loop back up
         
         firstEND:
-        mov     dh, 1
-        mov     dl, 0
-        mov     ah, 2
-        int     10h
+        mov     dh, 1           ; the row to print in
+        mov     dl, 0           ; the coloumn to print in
+        mov     ah, 2           ; syscall to set cursor position
+        int     10h             ; do it!
         
-        mov     al, 01b
-        mov     bh, 0
-        mov     bl, 00001011b
-        mov     cx, prompt2Len
+        mov     al, 01b         
+        ; - bit 0 is 1, so update the cursor position after printing 
+        ; - bit 1 is 0, so text does not have predefined graphics
+        mov     bh, 0           ; page number
+        mov     bl, 00001011b   
+        ; high bit {foreground}: 0xB/1011b [bright cyan]
+        ; low bit {background}: 0x0/0000b [black]
+        mov     cx, prompt2Len  ; moving the length of prompt2 to cx
         
         push    cs              ; pushing cs into stack
-        pop     es
+        pop     es              ; popping cs from stack to es [extra segment]
         mov     bp, offset prompt2
-        mov     ah, 13h
-        int     10h
+        ; moving the address of prompt2 to bp [base pointer]
+        mov     ah, 13h         ; syscall to print string
+        int     10h             ; do it!
         
-        mov     bx, 0
-        mov     cx, 10
+        mov     bx, 0           ; bx = 0 / index of msg array
+        mov     cx, 10          ; loop counter initialised to 10
         getIn:
-            mov     ah, 00h
-            int     16h
-            cmp     al, 0Dh
+            mov     ah, 00h     ; syscall to get a character
+            int     16h         ; do it!
+            cmp     al, 0Dh     ; comparing the user input with 0Dh [carriage return]
             je      resetPointer
+            ; jmp to resetPointer label if the above instruction satisfies
             mov     [msg+bx], al
+            ; storing the user input at the address of msg + bx
             inc     bx
+            ; incrementing the index of msg array
             loop    getIn
+            ; loop back up until cx = 0
         
-        resetPointer:
+        resetPointer:           ; label to continue the program, and reset the cursor position
             mov     [msg+bx], 0
-            mov     cx, 0
+            ; storing 0 at the address of msg + bx [end of string]
+            mov     cx, 0       ; loop counter initialised to 0
             
-            mov     dh, 0
-            mov     dl, 0
-            mov     bh, 1
-            mov     ah, 2
-            int     10h
+            mov     dh, 0       ; the row to print in
+            mov     dl, 0       ; the coloumn to print in
+            mov     bh, 1       ; page number
+            mov     ah, 2       ; syscall to set cursor position
+            int     10h         ; do it!
         
-            mov     al, 1
-            mov     ah, 05h
-            int     10h
+            mov     al, 1       ; new active page
+            mov     ah, 05h     ; syscall to set active page
+            int     10h         ; do it!
 
     print: 
         cmp     dh, c           ; comparing the dh register (loop index) with counter
         je      loopend         ; jmp to loopend label if the above instruction satisfies
-        cmp     dl, 50h
-        jg      testC2
-        mov     cx, 8
+        cmp     dl, 50h         ; comparing the dl register (cursor position) with 50h [80d] (boundary of screen)
+        jg      testC2          ; jmp to testC2 label if the above instruction satisfies
+        mov     cx, 8           ; loop counter initialised to 8
         
-        mov     ah, 50h
+        mov     ah, 50h         ; moving 50h to ah
         
         testC:
-            cmp     dl, ah
-            je      decCursor
-            dec     ah
-            loop    testC
+            cmp     dl, ah      ; comparing the dl register (cursor position in coloumn) with ah
+            je      decCursor   ; jmp to decCursor label if the above instruction satisfies
+            dec     ah          ; decrementing the value of ah
+            loop    testC       ; loop back up for 8 times
             
-        jmp     cont
+        jmp     cont            ; jmp to cont label
             
         testC2:
-            mov     ah, 99h
+            mov     ah, 99h     ; moving 99h to ah
             
-        tc:
-            cmp     dl, ah
+        tc:                     ; label for testC2 loop 
+        ; because for some reason the column boundary is 100h in the lower rows
+        ; same logic as testC loop
+            cmp     dl, ah      
             je      decCursor
             dec     ah
             loop    tc
         
         jmp     cont         
         
-        decCursor:
-            mov     dl, 0
-            mov     ah, 2
-            int     10h
+        decCursor:              ; label to decrement the cursor position if it reaches the boundary
+            mov     dl, 0       ; moving 0 to dl [coloumn]
+            mov     ah, 2       ; syscall to set cursor position
+            int     10h         ; do it!
         
         cont:
-            call    prntIT          ; calling the printIT function/label to print the string
+            call    prntIT      ; calling the printIT function/label to print the string
         
-            inc     dh              ; incrementing the loop variable/ row position value of cursor
-            inc     dl              ; adding 1 to increase the dl {coloum}
-            mov     ah, 2           ; syscall to change cursor position
-            int     10h             ; do it!
-            jmp     print           ; loop back up
+            inc     dh          ; incrementing the loop variable/ row position value of cursor
+            inc     dl          ; adding 1 to increase the dl {coloum}
+            mov     ah, 2       ; syscall to change cursor position
+            int     10h         ; do it!
+            jmp     print       ; loop back up
 
     loopend:
-        mov     ah, 00h
-        int     16h    
-        int     20h
-         
+        mov     ah, 00h         ; syscall to get a character and discard it
+        int     16h             ; do it!
+        int     20h             ; syscall to terminate the program / deprecated by MS DOS int 21h / but this is hardware interrupt
+
     vld:
         mov     si, offset numArr   ; si = &numArr
         ; alternatively to offset we can use `lea' which is more powerful
@@ -192,7 +208,7 @@ jmp .text
 
     good:
         pop     ax              ; restore ax register.
-        ret
+        ret                     ; return to the program
     
     bad:
         jmp     .text           ; restart the program
