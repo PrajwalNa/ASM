@@ -196,7 +196,7 @@ jmp .text
             mov     dl, 0
             mov     ah, 2       ; syscall to set cursor position
             int     10h
-            sub     c, 18h
+            sub     c, 18h      ; subtracting 18h [24d] from c [the number of time to print the string]
             mov     al, bh      ; setting current active page
             mov     ah, 05h     ; syscall for it
             int     10h
