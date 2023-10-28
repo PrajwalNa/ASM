@@ -14,12 +14,12 @@ section .data:
 section .text:
 _start:
 	mov eax, 4            	; the syscall for write command
-     	mov ebx, 1              ; use stdout as the file descriptor
-     	mov ecx, message        ; use message as the buffer
-     	mov edx, message_length ; supplying the length
-     	int 0x80		; calling kernel
+	mov ebx, 1              ; use stdout as the file descriptor
+	mov ecx, message        ; use message as the buffer
+	mov edx, message_length ; supplying the length
+	int 0x80		; calling kernel
 
-     	mov eax, 1		; invoke exit syscall
-     	mov ebx, 0		; exit with code 0
-     	int 0x80
+	mov eax, 1		; invoke exit syscall
+	mov ebx, 0		; exit with code 0
+	int 0x80
 
