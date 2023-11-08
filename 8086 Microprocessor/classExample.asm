@@ -12,8 +12,6 @@ jmp code
 data:
     prompt db "Enter a string of letters, max 15 letters: ", 0
     promptLen equ $-prompt
-    promptERR db "Invalid Entry!! try again: ", 0
-    promptErrLen equ $-promptERR
 
 bss:
     userIN db 15 dup (?)
@@ -47,17 +45,7 @@ code:
     call checkINP       ; calling the check input procedure
     cmp al, 0xAA        ; comparing the input to the invalid input
     jne carryON         ; if the input is valid, jump to carryON
-
-    inc dh              ; incrementing the row
-    mov dl, 0           ; reseting the coloumn
-    mov ah, 2           ; syscall to set cursor position
-    int 10h
-
-    mov ax, offset promptERR    ; the physical address of the string/array to print in ax
-    mov bx, promptErrLen        ; the length of the string/array to print in bx          
-    call printSTR               ; calling the print string procedure
-    lea bx, userIN              ; resetting bx to point to the first index address of userIN
-    jmp userINP                 ; jump to userINP to get input again
+    mov al, 0x20
     
     carryON:                    ; if the input is valid, carry on
     xor ah, ah                  ; clearing ah
@@ -86,6 +74,7 @@ code:
     getINP proc         ; procedure to get input
         mov ah, 00h     ; syscall to get input
         int 16h         ; interrupt 16h
+        call printCHAR
         ret             ; return to the calling procedure
         endp            ; end procedure
     
@@ -132,7 +121,7 @@ code:
         add dx, 0x20    ; add 0x20 to the value of dx, dx = dx + 0x20 to convert to lower case
         mov [bx], dx    ; move the value of dx into the address of bx, &bx = dx
         ; one line instruction to move space character to the address of bx in userMOD array
-        skip:   mov [bx], dx
+        skip:   mov [bx], 0x3F
         afterUP:        ; after input case conversion
         inc bx          ; increment the address of bx
         inc si          ; increment the address of si
@@ -157,3 +146,9 @@ code:
         int 10h         ; interrupt 10h
         ret             ; return to the calling procedure
         endp            ; end procedure
+        
+    printCHAR proc      ; to print the character entered by the user, mimics the int 21h/ah=02h but purely with hardware interrupts
+        mov ah, 0Eh     ; syscall to print character, since the character is already in al from int 16h
+        int 10h
+        ret
+        endp
