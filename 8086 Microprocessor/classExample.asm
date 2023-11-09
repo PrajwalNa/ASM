@@ -45,7 +45,7 @@ code:
     call checkINP       ; calling the check input procedure
     cmp al, 0xAA        ; comparing the input to the invalid input
     jne carryON         ; if the input is valid, jump to carryON
-    mov al, 0x20
+    mov al, 0x3F
     
     carryON:                    ; if the input is valid, carry on
     xor ah, ah                  ; clearing ah
@@ -112,6 +112,8 @@ code:
         mov dx, [si]    ; move the value of si into dx, dx = *si
         cmp dl, 0x20    ; compare the value of dl to the space character
         je  skip        ; if the value of dl is the space character, jump to skip
+        cmp dl, 0x3F
+        je skip
         cmp dl, 0x61    ; compare the value of dl to the lower case a
         jl  upper       ; if the value of dl is less than the lower case a, jump to upper
         sub dx, 0x20    ; subtract 0x20 from the value of dx, dx = dx - 0x20 to convert to upper case
@@ -121,7 +123,7 @@ code:
         add dx, 0x20    ; add 0x20 to the value of dx, dx = dx + 0x20 to convert to lower case
         mov [bx], dx    ; move the value of dx into the address of bx, &bx = dx
         ; one line instruction to move space character to the address of bx in userMOD array
-        skip:   mov [bx], 0x3F
+        skip:   mov [bx], dx
         afterUP:        ; after input case conversion
         inc bx          ; increment the address of bx
         inc si          ; increment the address of si
@@ -143,12 +145,12 @@ code:
         push cs         ; push cs to top of stack
         pop es          ; pop top of stack into es
         mov ah, 13h     ; syscall to print string
-        int 10h         ; interrupt 10h
+        int 10h
         ret             ; return to the calling procedure
         endp            ; end procedure
         
-    printCHAR proc      ; to print the character entered by the user, mimics the int 21h/ah=02h but purely with hardware interrupts
-        mov ah, 0Eh     ; syscall to print character, since the character is already in al from int 16h
+    printCHAR proc
+        mov ah, 0Eh
         int 10h
         ret
         endp
