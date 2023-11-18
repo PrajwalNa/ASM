@@ -120,7 +120,7 @@ code:
         inc si              ; increment si to point to the next character
         mov [si], 0x20      ; move space to the index pointed by si
         inc si              ; increment si to point to the next character
-        mov palinsPos, si   ; save the position of the next character to be written in palins
+        mov palinsPos, si   ; save (the position of last character in palins + 1) to palinsPos
         pop si              ; pop si from stack
         jmp repeat          ; jump back up to repeat
         
@@ -146,9 +146,9 @@ code:
         call printSTR               ; call printSTR
         setCol palinLEN             ; set the column number to the length of palinPrompt
         
-        mov ax, offset palins       ; move the address of palins to ax
-        mov bx, palinsPos           ; move the position of the last character in palins to bx
-        sub bx, ax                  ; bx (last address of palins after loop) - ax (first address of palins, look at line 149) = length of palins
+        mov ax, offset palins   ; move the address of palins to ax
+        mov bx, palinsPos       ; move the position of the last character in palins to bx
+        sub bx, ax              ; bx (last address of palins + 1) - ax (first address of palins, look at line 149) = length of palins
         call printSTR
         
         jmp fin                 ; jump to fin
