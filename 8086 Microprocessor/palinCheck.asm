@@ -12,6 +12,8 @@ org 100h
 
 jmp code
 
+; variable declaration
+; ---------------------
 data:
     ; some predefined strings to be printed
     entry db "Enter a String: ", 0
@@ -32,7 +34,10 @@ data:
     counter dw 0x3030       ; 0x3030 is the ascii value of 00, which is the number 0
     palins db 101 DUP (0)   ; 100 characters + 1 null terminator, for storing the palindromes found
     palinsPos dw 0          ; variable for storing the position of the next character to be written in palins
-    
+
+
+; the main working part of the program
+; -------------------------------------    
 code:
     ; setting the cursor position to 0,0
     mov dx, 0
@@ -44,7 +49,8 @@ code:
     mov bx, entryLEN
     call printSTR
     
-    mov palinsPos, offset palins ; loading address of palins into palinsPos to initialize it
+    ; loading address of palins into palinsPos to set to the beginning of palins array
+    mov palinsPos, offset palins
     mov cx, 100             ; setting cx to 100, i.e. the length of userSTR
     lea bx, userSTR         ; loading the first address of userSTR into bx
     
@@ -89,7 +95,10 @@ code:
         
         ; if palindrome: di -> first character of userWord, bx -> last character of userWord
         ; si -> usrSTR character after the last character of userWord eitherways
-
+        
+        ; perform checks on the value of counter to increment it appropriately
+        ; si has the address of userSTR position which needs to be preserved
+        
         push si             ; saving si to stack
         lea si, counter     ; loading the address of counter into si
         
@@ -105,10 +114,14 @@ code:
         normVal:            ; normal increment of counter
         inc [si+1]          ; increment the unit's place
         noMAX:
+        
+        ; storing the palindrome into the array
+        
         mov si, palinsPos   ; move the position of the next character to be written in palins to si
         sub bx, cx          ; bx (last address of userWORD after loop) - cx (first address of userWORD, look at line 77) = length of userWORD
         mov cx, bx          ; move the length of userWORD to cx
         inc cx              ; increment cx since the difference between last and first address is 1 less than the actual length
+        
         moveWord:
             mov bx, [di]    ; move the character pointed by di to bx
             mov [si], bx    ; move the character in bx to the palins array at the index pointed by si
@@ -128,6 +141,12 @@ code:
     noWordsLeft:
         cmp counter, 0x3030 ; comparing counter to 00
         je  checkBAD        ; if counter is 00, jump to checkBAD, else fall through into checkGOOD
+        
+        ; removing the comma after the last character in palins array
+        mov si, palinsPos   ; load the last position for palins array (would be pointing to NULL)
+        sub si, 2           ; decrement to point to comma (since after each word it was ", ")
+        mov [si], 0x20      ; replace comma with space
+        mov palinsPos, si   ; save that position
         
     
     checkGOOD:
@@ -162,7 +181,9 @@ code:
     fin:
         ret
     
-    
+
+; procedures declared below
+; --------------------------    
     getWORD proc
         push dx         ; save dx in stack
         nxtCh:
@@ -172,8 +193,8 @@ code:
             je goBack           ; if the character is null terminator, jump to goBack, else continue
             mov dx, [si]        ; move one character from the string pointed by si to dx
             mov [di], dx        ; move the character from dx to the string pointed by di
-            inc si              ; increment si to point to the next character
-            inc di              ; increment di to point to the next character
+            inc di              ; increment di to point to the next position to write into
+            inc si              ; increment si to point to the next character to read 
             jmp nxtCh           ; jump back up to getWORD
         goBack:
         pop dx          ; get dx from stack
