@@ -83,15 +83,15 @@ jmp .text
         ; 323/10 = 32, remainder = 3
         ; 32/10 = 3, remainder = 2
         ; 3/10 = 0, remainder = 3
-        ; so the result is 3 2 3 5 7
+        ; so the result is 3 2 3 5 7 spilt with the loop
         ; and since we are inserting from the end, the order is perfect
         add     dl, '0'         ; convert remainder to ascii
-        ; 7 + '0' = 0x55 + 0x48 = 0x103 = '7'
-        ; 5 + '0' = 0x53 + 0x48 = 0x9B = '5'
-        ; 3 + '0' = 0x51 + 0x48 = 0x99 = '3'
-        ; 2 + '0' = 0x50 + 0x48 = 0x98 = '2'
-        ; 3 + '0' = 0x51 + 0x48 = 0x99 = '3'
-        ; so the result is "3", "2", "3", "5", "7" stored in resASCII
+        ; 7 + '0' = 0x7 + 0x30 = 0x37 = '7'
+        ; 5 + '0' = 0x5 + 0x30 = 0x35 = '5'
+        ; 3 + '0' = 0x3 + 0x30 = 0x33 = '3'
+        ; 2 + '0' = 0x2 + 0x30 = 0x32 = '2'
+        ; 3 + '0' = 0x3 + 0x30 = 0x33 = '3'
+        ; so the result is "3", "2", "3", "5", "7" stored in resASCII with the loop
         dec     si              ; move si to one position closer to beginning in resASCII
         mov     [si], dl        ; store character in resASCII
         test    ax, ax          ; check if quotient is zero
